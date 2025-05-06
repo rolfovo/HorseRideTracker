@@ -1,35 +1,35 @@
 package com.example.horseridetracker
-import android.util.Log
+
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.horseridetracker.ui.theme.HorseRideTrackerTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.random.Random
-import kotlinx.coroutines.delay
+
 class CalibrationActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val horseName = intent.getStringExtra("horseName") ?: "Neznámý kůň"
+
         setContent {
             HorseRideTrackerTheme {
-                CalibrationScreen(horseName = "Orin") { step, trot, canter ->
-                    // Tady si uložíš výsledky třeba do databáze nebo souboru
-                    Log.d("Kalibrace", "Krok: $step, Klus: $trot, Cval: $canter")
-                    finish() // ukončí aktivitu
+                CalibrationScreen(horseName = horseName) { step, trot, canter ->
+                    Log.d("Kalibrace", "[$horseName] Krok: $step, Klus: $trot, Cval: $canter")
+                    finish()
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun CalibrationScreen(
@@ -48,7 +48,7 @@ fun CalibrationScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("Kalibrace pro koně: $horseName")
+        Text("Kalibrace pro koně: $horseName", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
 
         CalibrationButton("Začni kalibraci kroku", isMeasuring) {
@@ -85,17 +85,16 @@ fun CalibrationScreen(
         Text("Cval: ${"%.1f".format(canter)} km/h")
 
         Spacer(modifier = Modifier.height(16.dp))
+
         Button(
-            onClick = {
-                onCalibrationComplete(step, trot, canter)
-            },
-            enabled = step > 0 && trot > 0 && canter > 0
+            onClick = { onCalibrationComplete(step, trot, canter) },
+            enabled = step > 0 && trot > 0 && canter > 0,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text("Uložit kalibraci")
         }
     }
 }
-
 
 @Composable
 fun CalibrationButton(text: String, isDisabled: Boolean, onClick: () -> Unit) {
@@ -108,9 +107,7 @@ fun CalibrationButton(text: String, isDisabled: Boolean, onClick: () -> Unit) {
     }
 }
 
-fun Double.format(digits: Int = 2): String = "%.${digits}f".format(this)
-
 suspend fun simulateMeasurement(): Double {
-    delay(15_000) // 15 sekund čekání jako simulace měření
-    return Random.nextDouble(3.0, 15.0) // náhodná rychlost v km/h
+    delay(5000) // kratší simulace na 5s místo 15s
+    return Random.nextDouble(3.0, 15.0)
 }

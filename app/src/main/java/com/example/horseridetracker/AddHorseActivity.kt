@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.horseridetracker.ui.theme.HorseRideTrackerTheme
+import android.content.Context
+
 
 class AddHorseActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,8 +35,8 @@ fun AddHorseScreen() {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("Zadej jméno koně", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(12.dp))
+        Text("Zadej jméno koně", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = horseName,
@@ -47,16 +49,23 @@ fun AddHorseScreen() {
 
         Button(
             onClick = {
-                if (horseName.isNotBlank()) {
-                    // Předáme jméno do kalibrace
-                    val intent = Intent(context, CalibrationActivity::class.java)
-                    intent.putExtra("horseName", horseName)
-                    context.startActivity(intent)
+                val prefs = context.getSharedPreferences("horses", Context.MODE_PRIVATE)
+                val currentHorses = prefs.getStringSet("horseNames", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+                currentHorses.add(horseName.trim())
+                prefs.edit().putStringSet("horseNames", currentHorses).apply()
+
+                val intent = Intent(context, CalibrationActivity::class.java)
+                intent.putExtra("horseName", horseName.trim())
+                context.startActivity(intent)
+
+                if (context is ComponentActivity) {
+                    context.finish()
                 }
             },
-            enabled = horseName.isNotBlank()
+            enabled = horseName.trim().isNotEmpty(),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Uložit a kalibrovat")
+            Text("Pokračovat na kalibraci")
         }
     }
 }
