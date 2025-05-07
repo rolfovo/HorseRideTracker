@@ -1,5 +1,6 @@
 package com.example.horseridetracker
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,17 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.horseridetracker.ui.theme.HorseRideTrackerTheme
-import android.content.Context
-
 
 class AddHorseActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            HorseRideTrackerTheme {
-                AddHorseScreen()
-            }
-        }
+        setContent { HorseRideTrackerTheme { AddHorseScreen() } }
     }
 }
 
@@ -31,12 +26,12 @@ fun AddHorseScreen() {
     var horseName by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         Text("Zadej jméno koně", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
             value = horseName,
@@ -45,27 +40,28 @@ fun AddHorseScreen() {
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(Modifier.height(24.dp))
 
         Button(
             onClick = {
-                val prefs = context.getSharedPreferences("horses", Context.MODE_PRIVATE)
-                val currentHorses = prefs.getStringSet("horseNames", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-                currentHorses.add(horseName.trim())
-                prefs.edit().putStringSet("horseNames", currentHorses).apply()
+                val prefs   = context.getSharedPreferences("horses", Context.MODE_PRIVATE)
+                val current = prefs.getStringSet(PrefKeys.HORSE_NAMES, mutableSetOf())?.toMutableSet()
+                    ?: mutableSetOf()
 
-                val intent = Intent(context, CalibrationActivity::class.java)
-                intent.putExtra("horseName", horseName.trim())
-                context.startActivity(intent)
+                val trimmed = horseName.trim()
+                if (trimmed.isNotEmpty()) {
+                    current.add(trimmed)
+                    prefs.edit().putStringSet(PrefKeys.HORSE_NAMES, current).apply()
 
-                if (context is ComponentActivity) {
-                    context.finish()
+                    context.startActivity(
+                        Intent(context, CalibrationActivity::class.java)
+                            .putExtra("horseName", trimmed)
+                    )
+                    (context as? ComponentActivity)?.finish()
                 }
             },
             enabled = horseName.trim().isNotEmpty(),
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Pokračovat na kalibraci")
-        }
+        ) { Text("Pokračovat na kalibraci") }
     }
 }

@@ -1,6 +1,5 @@
 package com.example.horseridetracker
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -8,13 +7,15 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.horseridetracker.ui.theme.HorseRideTrackerTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+import androidx.compose.foundation.clickable
+
 
 class CalibrationActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,18 +26,20 @@ class CalibrationActivity : ComponentActivity() {
         setContent {
             HorseRideTrackerTheme {
                 CalibrationScreen(horseName) { step, trot, canter ->
-                    // Uložit do SharedPreferences
-                    val sharedPreferences = getSharedPreferences("horses", Context.MODE_PRIVATE)
-                    val editor = sharedPreferences.edit()
-                    val existing = sharedPreferences.getStringSet("horseNames", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-                    existing.add(horseName)
-                    editor.putStringSet("horseNames", existing)
-                    editor.putFloat("${horseName}_step", step.toFloat())
-                    editor.putFloat("${horseName}_trot", trot.toFloat())
-                    editor.putFloat("${horseName}_canter", canter.toFloat())
-                    editor.apply()
+                    Log.d("Kalibrace", "[$horseName] Krok: $step, Klus: $trot, Cval: $canter")
 
-                    Log.d("Kalibrace", "Krok: $step, Klus: $trot, Cval: $canter")
+                    val prefs = getSharedPreferences("horses", MODE_PRIVATE)
+                    prefs.edit().apply {
+                        putFloat("${horseName}_step",   step.toFloat())
+                        putFloat("${horseName}_trot",   trot.toFloat())
+                        putFloat("${horseName}_canter", canter.toFloat())
+
+                        val set = prefs.getStringSet(PrefKeys.HORSE_NAMES, setOf())?.toMutableSet()
+                            ?: mutableSetOf()
+                        set.add(horseName)
+                        putStringSet(PrefKeys.HORSE_NAMES, set)
+                    }.apply()
+
                     finish()
                 }
             }
@@ -44,16 +47,24 @@ class CalibrationActivity : ComponentActivity() {
     }
 }
 
+/* -------------------------------------------------------------------------- */
+
+private enum class CalibMode { AUTO, MANUAL }
+
+/* -------------------------------------------------------------------------- */
+
 @Composable
 fun CalibrationScreen(
     horseName: String,
     onCalibrationComplete: (Double, Double, Double) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var step by remember { mutableStateOf(0.0) }
-    var trot by remember { mutableStateOf(0.0) }
-    var canter by remember { mutableStateOf(0.0) }
     var isMeasuring by remember { mutableStateOf(false) }
+    var mode by remember { mutableStateOf(CalibMode.AUTO) }
+
+    var stepText by remember { mutableStateOf("") }
+    var trotText by remember { mutableStateOf("") }
+    var canterText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -61,66 +72,122 @@ fun CalibrationScreen(
             .padding(16.dp)
     ) {
         Text("Kalibrace pro koně: $horseName", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
 
-        CalibrationButton("Začni kalibraci kroku", isMeasuring) {
-            isMeasuring = true
-            coroutineScope.launch {
-                step = simulateMeasurement()
-                isMeasuring = false
+        /* ---- Přepínač režimu ---- */
+        ModeSwitch(mode) { mode = it }
+        Spacer(Modifier.height(16.dp))
+
+        /* ---- Vstupní pole (dostupné v obou režimech) ---- */
+        OutlinedTextField(
+            value = stepText,
+            onValueChange = { stepText = it },
+            label = { Text("Rychlost kroku (km/h)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = trotText,
+            onValueChange = { trotText = it },
+            label = { Text("Rychlost klusu (km/h)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = canterText,
+            onValueChange = { canterText = it },
+            label = { Text("Rychlost cvalu (km/h)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        /* ---- Tlačítka pro AUTO režim ---- */
+        if (mode == CalibMode.AUTO) {
+            Spacer(Modifier.height(16.dp))
+
+            CalibrationButton("Změřit krok", isMeasuring) {
+                isMeasuring = true
+                coroutineScope.launch {
+                    stepText = "%.1f".format(simulateMeasurement())
+                    isMeasuring = false
+                }
+            }
+            CalibrationButton("Změřit klus", isMeasuring) {
+                isMeasuring = true
+                coroutineScope.launch {
+                    trotText = "%.1f".format(simulateMeasurement())
+                    isMeasuring = false
+                }
+            }
+            CalibrationButton("Změřit cval", isMeasuring) {
+                isMeasuring = true
+                coroutineScope.launch {
+                    canterText = "%.1f".format(simulateMeasurement())
+                    isMeasuring = false
+                }
             }
         }
 
-        CalibrationButton("Začni kalibraci klusu", isMeasuring) {
-            isMeasuring = true
-            coroutineScope.launch {
-                trot = simulateMeasurement()
-                isMeasuring = false
-            }
-        }
+        Spacer(Modifier.height(24.dp))
 
-        CalibrationButton("Začni kalibraci cvalu", isMeasuring) {
-            isMeasuring = true
-            coroutineScope.launch {
-                canter = simulateMeasurement()
-                isMeasuring = false
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Krok: ${"%.1f".format(step)} km/h")
-        Text("Klus: ${"%.1f".format(trot)} km/h")
-        Text("Cval: ${"%.1f".format(canter)} km/h")
-
-        Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
+                val step   = stepText.toDoubleOrNull() ?: 0.0
+                val trot   = trotText.toDoubleOrNull() ?: 0.0
+                val canter = canterText.toDoubleOrNull() ?: 0.0
                 onCalibrationComplete(step, trot, canter)
             },
-            enabled = step > 0 && trot > 0 && canter > 0
+            enabled = stepText.isNotBlank() && trotText.isNotBlank() && canterText.isNotBlank(),
+            modifier = Modifier.fillMaxWidth()
+        ) { Text("Uložit kalibraci") }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+
+@Composable
+private fun ModeSwitch(current: CalibMode, onChange: (CalibMode) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        /* Radio – Auto */
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f).clickable { onChange(CalibMode.AUTO) }
         ) {
-            Text("Uložit kalibraci")
+            RadioButton(
+                selected = current == CalibMode.AUTO,
+                onClick = { onChange(CalibMode.AUTO) }
+            )
+            Text("Automaticky")
+        }
+
+        /* Radio – Manual */
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f).clickable { onChange(CalibMode.MANUAL) }
+        ) {
+            RadioButton(
+                selected = current == CalibMode.MANUAL,
+                onClick = { onChange(CalibMode.MANUAL) }
+            )
+            Text("Ručně")
         }
     }
 }
 
+/* -------------------------------------------------------------------------- */
+
 @Composable
-fun CalibrationButton(text: String, isDisabled: Boolean, onClick: () -> Unit) {
+private fun CalibrationButton(text: String, isDisabled: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         enabled = !isDisabled,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(text)
-    }
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) { Text(text) }
 }
 
-suspend fun simulateMeasurement(): Double {
-    val values = mutableListOf<Double>()
-    repeat(30) {
-        delay(1000)
-        values.add(Random.nextDouble(3.0, 15.0)) // náhodná rychlost každou sekundu
-    }
-    return values.average()
+private suspend fun simulateMeasurement(): Double {
+    delay(5000)                       // simulace 5 s měření
+    return Random.nextDouble(3.0, 15.0)
 }
