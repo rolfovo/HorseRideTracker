@@ -1,5 +1,6 @@
 package com.example.horseridetracker
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.horseridetracker.ui.theme.HorseRideTrackerTheme
 import kotlinx.coroutines.delay
@@ -22,8 +24,19 @@ class CalibrationActivity : ComponentActivity() {
 
         setContent {
             HorseRideTrackerTheme {
-                CalibrationScreen(horseName = horseName) { step, trot, canter ->
-                    Log.d("Kalibrace", "[$horseName] Krok: $step, Klus: $trot, Cval: $canter")
+                CalibrationScreen(horseName) { step, trot, canter ->
+                    // Uložit do SharedPreferences
+                    val sharedPreferences = getSharedPreferences("horses", Context.MODE_PRIVATE)
+                    val editor = sharedPreferences.edit()
+                    val existing = sharedPreferences.getStringSet("horseNames", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+                    existing.add(horseName)
+                    editor.putStringSet("horseNames", existing)
+                    editor.putFloat("${horseName}_step", step.toFloat())
+                    editor.putFloat("${horseName}_trot", trot.toFloat())
+                    editor.putFloat("${horseName}_canter", canter.toFloat())
+                    editor.apply()
+
+                    Log.d("Kalibrace", "Krok: $step, Klus: $trot, Cval: $canter")
                     finish()
                 }
             }
@@ -37,7 +50,6 @@ fun CalibrationScreen(
     onCalibrationComplete: (Double, Double, Double) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var currentPhase by remember { mutableStateOf("Zastavení") }
     var step by remember { mutableStateOf(0.0) }
     var trot by remember { mutableStateOf(0.0) }
     var canter by remember { mutableStateOf(0.0) }
@@ -52,7 +64,6 @@ fun CalibrationScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         CalibrationButton("Začni kalibraci kroku", isMeasuring) {
-            currentPhase = "krok"
             isMeasuring = true
             coroutineScope.launch {
                 step = simulateMeasurement()
@@ -61,7 +72,6 @@ fun CalibrationScreen(
         }
 
         CalibrationButton("Začni kalibraci klusu", isMeasuring) {
-            currentPhase = "klus"
             isMeasuring = true
             coroutineScope.launch {
                 trot = simulateMeasurement()
@@ -70,7 +80,6 @@ fun CalibrationScreen(
         }
 
         CalibrationButton("Začni kalibraci cvalu", isMeasuring) {
-            currentPhase = "cval"
             isMeasuring = true
             coroutineScope.launch {
                 canter = simulateMeasurement()
@@ -85,11 +94,11 @@ fun CalibrationScreen(
         Text("Cval: ${"%.1f".format(canter)} km/h")
 
         Spacer(modifier = Modifier.height(16.dp))
-
         Button(
-            onClick = { onCalibrationComplete(step, trot, canter) },
-            enabled = step > 0 && trot > 0 && canter > 0,
-            modifier = Modifier.fillMaxWidth()
+            onClick = {
+                onCalibrationComplete(step, trot, canter)
+            },
+            enabled = step > 0 && trot > 0 && canter > 0
         ) {
             Text("Uložit kalibraci")
         }
@@ -108,6 +117,10 @@ fun CalibrationButton(text: String, isDisabled: Boolean, onClick: () -> Unit) {
 }
 
 suspend fun simulateMeasurement(): Double {
-    delay(5000) // kratší simulace na 5s místo 15s
-    return Random.nextDouble(3.0, 15.0)
+    val values = mutableListOf<Double>()
+    repeat(30) {
+        delay(1000)
+        values.add(Random.nextDouble(3.0, 15.0)) // náhodná rychlost každou sekundu
+    }
+    return values.average()
 }

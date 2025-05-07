@@ -261,7 +261,7 @@ class RideActivity : ComponentActivity() {
             }
             val line = Polyline().apply {
                 outlinePaint.color = color
-                outlinePaint.strokeWidth = 6f
+                outlinePaint.strokeWidth = 10f
                 setPoints(listOf(
                     GeoPoint(prev.latitude, prev.longitude),
                     GeoPoint(location.latitude, location.longitude)
