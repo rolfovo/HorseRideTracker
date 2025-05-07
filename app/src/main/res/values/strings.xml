@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">HorseRideTracker</string>
+    <string name="distance_fmt">Ujetá vzdálenost: %.2f km</string>
 </resources>

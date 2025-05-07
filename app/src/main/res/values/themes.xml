@@ -1,5 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.HorseRideTracker" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Appovačkový (AppCompat) motiv pro celou appku -->
+    <style name="Theme.HorseRideTracker" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primární barvy, pokud chceš -->
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Sekundární atd. můžeš si doplnit -->
+    </style>
 </resources>

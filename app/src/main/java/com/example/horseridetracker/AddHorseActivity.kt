@@ -1,6 +1,5 @@
 package com.example.horseridetracker
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,55 +12,69 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.horseridetracker.ui.theme.HorseRideTrackerTheme
 
+/**
+ * • “Add” mód = přidá nového koně a spustí kalibraci.
+ * • “Edit” mód = přejmenuje stávajícího koně, jen se zavře.
+ */
 class AddHorseActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { HorseRideTrackerTheme { AddHorseScreen() } }
+        val originalName = intent.getStringExtra(KEY_ORIGINAL_NAME) // null = přidávání
+        setContent {
+            HorseRideTrackerTheme {
+                Surface(Modifier.fillMaxSize()) { AddHorseScreen(originalName) }
+            }
+        }
     }
+    companion object { const val KEY_ORIGINAL_NAME = "originalName" }
 }
 
 @Composable
-fun AddHorseScreen() {
+private fun AddHorseScreen(originalName: String?) {
     val context = LocalContext.current
-    var horseName by remember { mutableStateOf("") }
+    var horseName by remember { mutableStateOf(originalName ?: "") }
+    val isEdit = originalName != null
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text("Zadej jméno koně", style = MaterialTheme.typography.titleLarge)
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Text(
+            if (isEdit) "Uprav jméno koně" else "Přidej nového koně",
+            style = MaterialTheme.typography.titleLarge
+        )
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
             value = horseName,
             onValueChange = { horseName = it },
             label = { Text("Jméno koně") },
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(Modifier.height(24.dp))
 
         Button(
             onClick = {
-                val prefs   = context.getSharedPreferences("horses", Context.MODE_PRIVATE)
-                val current = prefs.getStringSet(PrefKeys.HORSE_NAMES, mutableSetOf())?.toMutableSet()
-                    ?: mutableSetOf()
+                saveHorse(context, horseName.trim(), originalName)
 
-                val trimmed = horseName.trim()
-                if (trimmed.isNotEmpty()) {
-                    current.add(trimmed)
-                    prefs.edit().putStringSet(PrefKeys.HORSE_NAMES, current).apply()
-
+                if (!isEdit) {   // jen při přidání spustím kalibraci
                     context.startActivity(
-                        Intent(context, CalibrationActivity::class.java)
-                            .putExtra("horseName", trimmed)
+                        Intent(context, CalibrationActivity::class.java)  // ⚠️ pokud máš CalibrationActivity v podbalíčku, přidej příslušný import
+                            .putExtra("horseName", horseName.trim())
                     )
-                    (context as? ComponentActivity)?.finish()
                 }
+                (context as? ComponentActivity)?.finish()
             },
             enabled = horseName.trim().isNotEmpty(),
             modifier = Modifier.fillMaxWidth()
-        ) { Text("Pokračovat na kalibraci") }
+        ) { Text(if (isEdit) "Uložit změny" else "Pokračovat na kalibraci") }
     }
+}
+
+/** Uloží / přejmenuje koně přes společný HorsePrefs */
+private fun saveHorse(context: android.content.Context, newName: String, oldName: String?) {
+    val horses = HorsePrefs.load(context).toMutableSet()
+    if (horses.any { it.equals(newName, true) && it != oldName }) return  // duplicita
+
+    oldName?.let { horses.remove(it) }
+    horses.add(newName)
+    HorsePrefs.save(context, horses)
 }
