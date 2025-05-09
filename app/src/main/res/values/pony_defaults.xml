@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="pony_default_speeds">
+        <item>4.0</item>  <!-- krok -->
+        <item>6.0</item>  <!-- klus -->
+        <item>8.0</item>  <!-- cval -->
+    </string-array>
+</resources>

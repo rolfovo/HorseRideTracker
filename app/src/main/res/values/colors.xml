@@ -7,4 +7,6 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+	<color name="horse_primary">#4A148C</color>       <!-- tmavě fialová -->
+	<color name="horse_accent">#FF6F00</color>        <!-- oranžová pro akcenty -->
 </resources>

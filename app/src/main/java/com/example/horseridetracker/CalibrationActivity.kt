@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -36,15 +37,14 @@ class CalibrationActivity : ComponentActivity() {
         setContent {
             HorseRideTrackerTheme {
                 CalibrationScreen(horseName) { step, trot, canter ->
-                    // 1) Ulož kalibraci do SharedPreferences
-                    val prefs = getSharedPreferences("calibration", Context.MODE_PRIVATE)
-                    with(prefs.edit()) {
-                        putFloat("step_${'$'}horseName", step.toFloat())
-                        putFloat("trot_${'$'}horseName", trot.toFloat())
-                        putFloat("canter_${'$'}horseName", canter.toFloat())
+                    // Uložíme kalibraci do SharedPreferences se stejným názvem i klíči jako RideActivity
+                    val prefs = getSharedPreferences("pony_calibration", Context.MODE_PRIVATE)
+                    prefs.edit().apply {
+                        putFloat("${horseName}_step_speed", step.toFloat())
+                        putFloat("${horseName}_trot_speed", trot.toFloat())
+                        putFloat("${horseName}_canter_speed", canter.toFloat())
                         apply()
                     }
-                    // 2) Vrátíme výsledek a ukončíme
                     setResult(RESULT_OK)
                     finish()
                 }
@@ -60,11 +60,13 @@ fun CalibrationScreen(
     onCalibrationComplete: (Double, Double, Double) -> Unit
 ) {
     val context = LocalContext.current
-    val fielPrefs = context.getSharedPreferences("calibration", Context.MODE_PRIVATE)
-    val savedStep = fielPrefs.getFloat("step_${'$'}horseName", 0f).toDouble()
-    val savedTrot = fielPrefs.getFloat("trot_${'$'}horseName", 0f).toDouble()
-    val savedCanter = fielPrefs.getFloat("canter_${'$'}horseName", 0f).toDouble()
-    val fused = remember { LocationServices.getFusedLocationProviderClient(context) }
+    // Používáme stejný prefs a klíče jako při ukládání
+    val prefs = context.getSharedPreferences("pony_calibration", Context.MODE_PRIVATE)
+    val savedStep   = prefs.getFloat("${horseName}_step_speed", 0f).toDouble()
+    val savedTrot   = prefs.getFloat("${horseName}_trot_speed", 0f).toDouble()
+    val savedCanter = prefs.getFloat("${horseName}_canter_speed", 0f).toDouble()
+
+    val fused: FusedLocationProviderClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val scope = rememberCoroutineScope()
 
     var mode by remember { mutableStateOf(CalibMode.AUTO) }
@@ -74,10 +76,9 @@ fun CalibrationScreen(
     var measuring by remember { mutableStateOf(false) }
     var measureLabel by remember { mutableStateOf("") }
 
-    val permLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) mode = CalibMode.MANUAL
-        }
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (!granted) mode = CalibMode.MANUAL }
 
     Column(
         modifier = Modifier
@@ -85,7 +86,7 @@ fun CalibrationScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Kalibrace pro koně: ${'$'}horseName", style = MaterialTheme.typography.titleLarge)
+        Text("Kalibrace pro koně: $horseName", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -117,7 +118,7 @@ fun CalibrationScreen(
                 startMeasurement(fused, scope) { v -> canter = v; measuring = false }
             }
             Spacer(Modifier.height(16.dp))
-            if (measuring) Text("Měřím ${'$'}measureLabel…", style = MaterialTheme.typography.bodyMedium)
+            if (measuring) Text("Měřím $measureLabel…", style = MaterialTheme.typography.bodyMedium)
         }
 
         Spacer(Modifier.height(24.dp))
@@ -135,9 +136,7 @@ fun CalibrationScreen(
         if (ContextCompat.checkSelfPermission(
                 context, Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
+        ) { permLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }
     }
 }
 
@@ -194,8 +193,7 @@ private fun startMeasurement(
     scope.launch {
         delay(10_000)
         fused.removeLocationUpdates(callback)
-        val kmh = if (samples.isEmpty()) 0.0
-        else (samples.average() * 3.6 * 10).roundToInt() / 10.0
+        val kmh = if (samples.isEmpty()) 0.0 else (samples.average() * 3.6 * 10).roundToInt() / 10.0
         onDone(kmh)
     }
 }
