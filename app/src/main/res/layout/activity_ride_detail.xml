@@ -86,14 +86,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Vzdálenost: – km"
-                        android:layout_marginBottom="4dp"/>
+                        android:layout_marginBottom="2dp"/>
 
                     <TextView
                         android:id="@+id/tvPony"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Poník: –"
-                        android:layout_marginBottom="4dp"/>
+                        android:layout_marginBottom="2dp"/>
 
                     <TextView
                         android:id="@+id/tvLast"

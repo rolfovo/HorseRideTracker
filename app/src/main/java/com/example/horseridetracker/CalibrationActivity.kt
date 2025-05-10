@@ -32,17 +32,17 @@ import kotlin.math.roundToInt
 class CalibrationActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val horseName = intent.getStringExtra("horseName") ?: "Neznámý kůň"
+        val pony = intent.getStringExtra("horseName") ?: "Neznámý kůň"
 
         setContent {
             HorseRideTrackerTheme {
-                CalibrationScreen(horseName) { step, trot, canter ->
+                CalibrationScreen(pony) { step, trot, canter ->
                     // Uložíme kalibraci do SharedPreferences se stejným názvem i klíči jako RideActivity
                     val prefs = getSharedPreferences("pony_calibration", Context.MODE_PRIVATE)
                     prefs.edit().apply {
-                        putFloat("${horseName}_step_speed", step.toFloat())
-                        putFloat("${horseName}_trot_speed", trot.toFloat())
-                        putFloat("${horseName}_canter_speed", canter.toFloat())
+                        putFloat("${pony}_step_speed", step.toFloat())
+                        putFloat("${pony}_trot_speed", trot.toFloat())
+                        putFloat("${pony}_canter_speed", canter.toFloat())
                         apply()
                     }
                     setResult(RESULT_OK)
@@ -56,15 +56,15 @@ class CalibrationActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalibrationScreen(
-    horseName: String,
+    pony: String,
     onCalibrationComplete: (Double, Double, Double) -> Unit
 ) {
     val context = LocalContext.current
     // Používáme stejný prefs a klíče jako při ukládání
     val prefs = context.getSharedPreferences("pony_calibration", Context.MODE_PRIVATE)
-    val savedStep   = prefs.getFloat("${horseName}_step_speed", 0f).toDouble()
-    val savedTrot   = prefs.getFloat("${horseName}_trot_speed", 0f).toDouble()
-    val savedCanter = prefs.getFloat("${horseName}_canter_speed", 0f).toDouble()
+    val savedStep   = prefs.getFloat("${pony}_step_speed", 0f).toDouble()
+    val savedTrot   = prefs.getFloat("${pony}_trot_speed", 0f).toDouble()
+    val savedCanter = prefs.getFloat("${pony}_canter_speed", 0f).toDouble()
 
     val fused: FusedLocationProviderClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val scope = rememberCoroutineScope()
@@ -86,7 +86,7 @@ fun CalibrationScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Kalibrace pro koně: $horseName", style = MaterialTheme.typography.titleLarge)
+        Text("Kalibrace pro koně: $pony", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {

@@ -4,7 +4,7 @@ import android.content.Context
 
 object HorsePrefs {
     private const val PREF = "horses"
-    private const val KEY  = "horseNames"
+    private const val KEY  = "pony"
 
     fun load(context: Context): MutableList<String> =
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE)

@@ -4,24 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- ===== Permissions ===== -->
-    <!-- Poloha (fine + coarse) pro GPS tracking -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <!-- Foreground tracking + konkrétně polohový typ (API 34+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-    <!-- (obecné FOREGROUND_SERVICE permission můžeš nechat, ale od API 34 se bere typově) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
-    <!-- Internet pro mapy / API volání -->
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Notifikace (vyžadováno od Android 13) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/> <!-- API 29+ -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
 
-    <!-- ======================== -->
     <application
+        android:name=".HorseTrackerApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -29,12 +21,17 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <!-- ==== Aktivity ==== -->
-        <activity android:name=".RideActivity"       android:exported="false" />
-        <activity android:name=".CalibrationActivity" android:exported="false" />
-        <activity android:name=".AddHorseActivity"    android:exported="false" />
-        <activity android:name=".HorseSelectActivity" android:exported="false" />
-        <activity android:name=".ManageHorsesActivity" android:exported="false" />
+        <!-- Statistiky a seznam poníků -->
+        <activity android:name=".StatsActivity" android:exported="false" />
+        <activity android:name=".PonyListActivity" android:exported="true" />
+
+        <!-- Stávající RideDetail atd. -->
+        <activity android:name=".RideActivity"           android:exported="false" />
+        <activity android:name=".CalibrationActivity"    android:exported="false" />
+        <activity android:name=".AddHorseActivity"       android:exported="false" />
+        <activity android:name=".HorseSelectActivity"    android:exported="false" />
+        <activity android:name=".ManageHorsesActivity"   android:exported="false" />
+        <activity android:name=".RideDetailActivity"     android:exported="false" />
 
         <!-- Hlavní vstupní bod aplikace -->
         <activity
@@ -42,27 +39,24 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/AppTheme">
-
             <intent-filter>
                 <action   android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- ==== Foreground Service (GPS tracking) ==== -->
-        <!-- Pokud ještě nemáš implementaci, ten blok klidně smaž nebo zakomentuj -->
+        <!-- GPS foreground services -->
         <service
             android:name=".RidedForegrounService"
             android:exported="false"
             android:foregroundServiceType="location" />
-
         <service
             android:name=".RideService"
             android:exported="false"
             android:foregroundServiceType="location"
             android:stopWithTask="false"/>
 
-        <!-- FileProvider (pro sdílení exportovaných souborů, fotek atd.) -->
+        <!-- FileProvider pro sdílení souborů -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

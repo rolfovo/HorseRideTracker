@@ -32,7 +32,7 @@ class AddHorseActivity : ComponentActivity() {
 @Composable
 private fun AddHorseScreen(originalName: String?) {
     val context = LocalContext.current
-    var horseName by remember { mutableStateOf(originalName ?: "") }
+    var pony by remember { mutableStateOf(originalName ?: "") }
     val isEdit = originalName != null
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -43,8 +43,8 @@ private fun AddHorseScreen(originalName: String?) {
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = horseName,
-            onValueChange = { horseName = it },
+            value = pony,
+            onValueChange = { pony = it },
             label = { Text("Jméno koně") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
@@ -53,17 +53,17 @@ private fun AddHorseScreen(originalName: String?) {
 
         Button(
             onClick = {
-                saveHorse(context, horseName.trim(), originalName)
+                saveHorse(context, pony.trim(), originalName)
 
                 if (!isEdit) {   // jen při přidání spustím kalibraci
                     context.startActivity(
                         Intent(context, CalibrationActivity::class.java)  // ⚠️ pokud máš CalibrationActivity v podbalíčku, přidej příslušný import
-                            .putExtra("horseName", horseName.trim())
+                            .putExtra("pony", pony.trim())
                     )
                 }
                 (context as? ComponentActivity)?.finish()
             },
-            enabled = horseName.trim().isNotEmpty(),
+            enabled = pony.trim().isNotEmpty(),
             modifier = Modifier.fillMaxWidth()
         ) { Text(if (isEdit) "Uložit změny" else "Pokračovat na kalibraci") }
     }

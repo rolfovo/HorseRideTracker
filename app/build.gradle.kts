@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
@@ -14,7 +15,6 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -40,7 +40,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -49,20 +48,29 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
     implementation("org.osmdroid:osmdroid-android:6.1.10")
     implementation("com.github.PhilJay:MPAndroidChart:3.1.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
+
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation ("com.google.android.gms:play-services-location:21.2.0")
+
+    implementation("androidx.room:room-runtime:2.5.1")
+    implementation(libs.androidx.room.common.jvm)
+    kapt("androidx.room:room-compiler:2.5.1")
+    implementation("androidx.room:room-ktx:2.5.1")
+
+    implementation("com.google.android.gms:play-services-location:21.2.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
-    implementation ("com.google.android.material:material:1.9.0")
-    implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation ("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
-    implementation ("org.osmdroid:osmdroid-android:6.1.3")
-    implementation ("androidx.preference:preference:1.2.0")
+    implementation("com.google.android.material:material:1.9.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
+    implementation("org.osmdroid:osmdroid-android:6.1.3")
+    implementation("androidx.preference:preference:1.2.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

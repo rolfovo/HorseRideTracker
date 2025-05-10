@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -22,17 +23,11 @@ import com.example.horseridetracker.ui.theme.HorseRideTrackerTheme
 
 private const val REQ_LOCATION = 100
 
-/**
- * Domovská obrazovka:
- * • Výběr koně → tlačítko „Spustit jízdu“
- * • Ikona seznamu v TopAppBar → ManageHorsesActivity
- */
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1) Zeptáme se na povolení polohy (i na pozadí)
+        // Požádáme o povolení polohy
         ActivityCompat.requestPermissions(
             this,
             arrayOf(
@@ -42,7 +37,6 @@ class MainActivity : ComponentActivity() {
             REQ_LOCATION
         )
 
-        // 2) Teprve pak naplníme Compose UI
         setContent {
             HorseRideTrackerTheme {
                 MainScreen()
@@ -57,7 +51,7 @@ private fun MainScreen() {
     val context = LocalContext.current
     var selectedHorseName by remember { mutableStateOf("") }
 
-    // Launcher, který čeká na výsledek z HorseSelectActivity
+    // Launcher pro výběr koně
     val selectHorseLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -89,9 +83,10 @@ private fun MainScreen() {
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp)
-                .fillMaxSize()
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            /** Info o vybraném koni **/
+            // Info o vybraném koni
             Text(
                 text = if (selectedHorseName.isEmpty())
                     "Žádný poník není vybrán"
@@ -102,7 +97,7 @@ private fun MainScreen() {
 
             Spacer(Modifier.height(16.dp))
 
-            /** Tlačítko pro výběr koně **/
+            // Tlačítko pro výběr koně
             Button(
                 onClick = {
                     selectHorseLauncher.launch(
@@ -116,24 +111,40 @@ private fun MainScreen() {
 
             Spacer(Modifier.height(16.dp))
 
-            /** Spustit jízdu – povoleno jen pokud je vybráno jméno **/
+            // Spustit jízdu
             Button(
                 onClick = {
-                    // 1) Start foreground služby
                     ContextCompat.startForegroundService(
                         context,
                         Intent(context, RideService::class.java)
                     )
-                    // 2) Otevři RideActivity
                     context.startActivity(
                         Intent(context, RideActivity::class.java)
-                            .putExtra("horseName", selectedHorseName)
+                            .putExtra("pony", selectedHorseName)
                     )
                 },
                 enabled = selectedHorseName.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Spustit jízdu")
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Nové tlačítko pro statistiky
+            Button(
+                onClick = {
+                    if (selectedHorseName.isNotEmpty()) {
+                        context.startActivity(
+                            Intent(context, StatsActivity::class.java)
+                                .putExtra("pony", selectedHorseName)
+                        )
+                    }
+                },
+                enabled = selectedHorseName.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Zobrazit statistiky")
             }
         }
     }
